@@ -37,7 +37,7 @@ def focal_length_to_fov_degrees(focal_length: float, image_width: float) -> floa
 class MogeModel(DepthEstimationModel):
     """https://github.com/microsoft/MoGe"""
 
-    def __init__(self) -> None:
+    def __init__(self, use_fp16=False) -> None:
         super().__init__()
         if MoGeModel is None:
             raise RuntimeError(
@@ -45,6 +45,7 @@ class MogeModel(DepthEstimationModel):
             )
         self.model = MoGeModel.from_pretrained("Ruicheng/moge-vitl")
         self.model = self.model.cuda().eval()
+        self.use_fp16 = use_fp16
 
     @property
     def depth_type(self) -> DepthType:
@@ -68,7 +69,7 @@ class MogeModel(DepthEstimationModel):
         # MoGe inference
         moge_input_dict = {"fov_x": focal_length_to_fov_degrees(focal_length, w)}
 
-        with torch.no_grad():
+        with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16, enabled=self.use_fp16):
             moge_output_full = self.model.infer(input_image_for_depth, **moge_input_dict)
 
         moge_depth_hw_full = moge_output_full["depth"]

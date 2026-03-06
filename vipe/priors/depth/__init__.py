@@ -16,7 +16,7 @@
 from .base import DepthEstimationInput, DepthEstimationModel, DepthEstimationResult, DepthType
 
 
-def make_depth_model(model: str):
+def make_depth_model(model: str, use_fp16: bool = False):
     if "-" not in model:
         model_name, model_sub = model, ""
     else:
@@ -35,7 +35,7 @@ def make_depth_model(model: str):
     elif model_name == "moge":
         from .moge import MogeModel
 
-        return MogeModel()
+        return MogeModel(use_fp16=use_fp16)
 
     else:
         raise ValueError(f"Unknown depth model: {model}")

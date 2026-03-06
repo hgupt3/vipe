@@ -65,15 +65,17 @@ class VipeModelCache:
         init_cfg: Optional[DictConfig] = None,
         post_cfg: Optional[DictConfig] = None,
         device: torch.device = torch.device("cuda"),
+        use_fp16: bool = False,
     ) -> "VipeModelCache":
         """
         Create a model cache by loading all required models.
-        
+
         Args:
             slam_cfg: SLAM config (for metric depth model)
             init_cfg: Init config (for GeoCalib)
             post_cfg: Post config (for adaptive depth)
             device: CUDA device
+            use_fp16: Use fp16 autocast for depth model inference
         """
         cache = cls(device=device)
         
@@ -85,7 +87,7 @@ class VipeModelCache:
         if slam_cfg is not None and slam_cfg.get("keyframe_depth") is not None:
             depth_name = slam_cfg.keyframe_depth
             logger.info(f"Loading SLAM metric depth model: {depth_name}")
-            cache.metric_depth = make_depth_model(depth_name)
+            cache.metric_depth = make_depth_model(depth_name, use_fp16=use_fp16)
             cache.metric_depth_name = depth_name
             # Will be adapted to pinhole if needed when used
         
@@ -123,11 +125,11 @@ class VipeModelCache:
                 video_model = None
             
             # Metric depth for adaptive alignment
-            cache.adaptive_metric_depth = make_depth_model(metric_model)
+            cache.adaptive_metric_depth = make_depth_model(metric_model, use_fp16=use_fp16)
             cache.adaptive_metric_depth_name = metric_model
             
             # PriorDA model
-            cache.prior_da_model = PriorDAModel()
+            cache.prior_da_model = PriorDAModel(use_fp16=use_fp16)
         
         # Load TrackAnything (SAM + AOT) for instance segmentation
         if init_cfg is not None and init_cfg.get("instance") is not None:

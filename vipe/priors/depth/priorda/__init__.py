@@ -28,9 +28,12 @@ class PriorDAModel(DepthEstimationModel):
     https://github.com/SpatialVision/Prior-Depth-Anything
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_fp16=False) -> None:
         super().__init__()
         self.model = PriorDepthAnything(device="cuda")
+        # Note: fp16 autocast is NOT applied here because PriorDA's depth_completion
+        # uses a custom CUDA nearest_neighbours op that only supports float32/float64.
+        self.use_fp16 = use_fp16
 
     @property
     def depth_type(self) -> DepthType:
